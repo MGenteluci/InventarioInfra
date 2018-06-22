@@ -1,64 +1,232 @@
+<%@page import="model.Monitor"%>
+<%@page import="model.Software"%>
 <%@page import="model.Colaborador"%>
 <%@page import="java.util.List"%>
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ include file = "header.html" %>
-<jsp:useBean id="daomonitor" class="model.dao.DaoMonitor"/>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-<%-- Listar os dados da tabela monitor --%>
-<table class="table" id="myTable">
-	<thead>
-	<tr>
-		<th scope="col">PatrimÃ´nio</th>
-		<th scope="col">Marca</th>
-		<th scope="col">Modelo</th>
-		<th scope="col">Colaborador</th>
-		<th></th>
-	</tr>
-	</thead>
-	<tbody>
-	<c:forEach var="monitor" items="${daomonitor.pesquisar()}">
-		<tr>
-			<td style="width: 20%">${monitor.patrimonio}</td>
-			<td style="width: 20%">${monitor.marca}</td>
-			<td style="width: 20%">${monitor.modelo}</td>
-			<td style="width: 20%"><a href="#" title="${daomonitor.consultarUm(monitor.colaborador)}" class="badge badge-warning">${monitor.colaborador}</a></td>
-			<td style="width: 20%">
-				
-				<form action="monitor" method="POST" style="display: none; float: left; margin-right: 1%">
-					<input type="hidden" name="monitor" value="remove"></input>
-					<input type="hidden" name="id" value="${monitor.id}"></input>
-					<button class="btn btn-danger" style="color:white" type="submit">Deletar</button>
-				</form>
-				
-				<button class="btn btn-warning" style="background-color:orange;color:white" type="submit" onClick="mostrar(${monitor.id})">Alterar</button>
-							
-				<form action="monitor" style="display:none" method="POST" id="${monitor.id}">
+<head>
 
-					<input type="hidden" class="form-control" name="id" value="${monitor.id}"> 
-					<input type="text" class="form-control" name="patrimonio" value="${monitor.patrimonio}">
-					<input type="text" class="form-control" name="marca" value="${monitor.marca}">
-					<input type="text" class="form-control" name="modelo" value="${monitor.modelo}">
-					<select name="colaborador" class="form-control" required>
-				    	<%
-				    		List<Colaborador> colaboradores = (List<Colaborador>) request.getAttribute("colaboradores");
-				    	out.print("<option value=\"\" selected>Selecionar Colaborador</option>");
-				    		for(Colaborador c : colaboradores){
-				    			out.print("<option value=\"" + c.getId() + "\">" + c.getId() + " - " + c.getNome() + "</option>");
-				    		}
-				    	%>
-				    </select>
-					<input type="hidden" name="monitor" value="update"></input>
-					
-					<button type="submit" class="btn btn-success" style="color: white">Confirmar</button>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
 
-				</form>
-						
-			</td>				
-		</tr>
-			
-	</c:forEach>
-	</tbody>
-</table>
+    <title>Inventário Infraestrutura</title>
 
-<%@ include file = "footer.html" %>
+    <!-- Bootstrap Core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link href="vendor/datatables-plugins/dataTables.bootstrap.css" rel="stylesheet">
+
+    <!-- DataTables Responsive CSS -->
+    <link href="vendor/datatables-responsive/dataTables.responsive.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="dist/css/sb-admin-2.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+<%
+if(session.getAttribute("usuario") == null || session.getAttribute("senha") == null ){
+	response.sendRedirect("login.jsp");
+}
+response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
+response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+response.setHeader("Expires", "0");
+
+	List<Monitor> monitores = (List<Monitor>) request.getAttribute("monitores");
+%>
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="abrirHome">Inventário Infraestrutura</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <ul class="nav navbar-top-links navbar-right">
+                <!-- /.dropdown -->
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="#"><i class="fa fa-user fa-fw"></i> Perfil</a>
+                        </li>
+                        <li><a href="#"><i class="fa fa-gear fa-fw"></i> Configurações</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li><a href="fazerLogoff"><i class="fa fa-sign-out fa-fw"></i> Sair</a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-user -->
+                </li>
+                <!-- /.dropdown -->
+            </ul>
+            <!-- /.navbar-top-links -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+
+                        <li>
+                            <a href="abrirHome"><i class="fa fa-dashboard fa-fw"></i> Home</a>
+                        </li>
+
+                        <li>
+                            <a href="#"><i class="fa fa-table fa-fw"></i> Visualizar<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="listarColaboradores">Colaboradores</a>
+                                </li>
+                                <li>
+                                    <a href="listarMonitores">Monitores</a>
+                                </li>
+                                <li>
+                                    <a href="listarSoftwares">Softwares</a>
+                                </li>
+                                <li>
+                                	<a href="listarEquipamentos">Equipamentos</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+
+                        <li>
+                            <a href="#"><i class="fa fa-edit fa-fw"></i> Cadastrar<span class="fa arrow"></span></a>
+                            <ul class="nav nav-second-level">
+                                <li>
+                                    <a href="abrirCadastrarColaborador">Colaborador</a>
+                                </li>
+                                <li>
+                                    <a href="abrirCadastrarMonitor">Monitor</a>
+                                </li>
+                                <li>
+                                    <a href="abrirCadastrarSoftware">Software</a>
+                                </li>
+                                <li>
+                                    <a href="abrirCadastrarEquipamento">Equipamento</a>
+                                </li>
+                            </ul>
+                            <!-- /.nav-second-level -->
+                        </li>
+
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <div id="page-wrapper">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">Lista de Monitores</h1>
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+            <!-- /.row -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                             Monitores
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <table width="100%" class="table table-striped table-bordered table-hover" id="dataTables-example">
+                                <thead>
+                                    <tr>
+                                        <th>Marca</th>
+                                        <th>Modelo</th>
+                                        <th>Data da Compra</th>
+                                        <th>Colaborador</th>
+                                        <th>Opções</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                	<c:forEach var="m" items="${monitores}">
+                                		<tr class="odd gradeX">
+                                        <td>${m.marca}</td>
+                                        <td>${m.modelo}</td>
+                                        <td>${m.dataCompra}</td>
+                                        <td class="center">${m.colaborador.nome}</td>
+                                        <td>
+                                        	<a href="javascript:alterarMonitor('${m.id}')">Alterar</a>
+                                        	<a href="javascript:removerMonitor('${m.id}', '${m.marca}', '${m.modelo}')">Remover</a>
+                                        </td>
+                                    </tr>
+                                	</c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+                </div>
+                <!-- /.col-lg-12 -->
+            </div>
+
+
+   
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="vendor/metisMenu/metisMenu.min.js"></script>
+
+    <!-- DataTables JavaScript -->
+    <script src="vendor/datatables/js/jquery.dataTables.min.js"></script>
+    <script src="vendor/datatables-plugins/dataTables.bootstrap.min.js"></script>
+    <script src="vendor/datatables-responsive/dataTables.responsive.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="dist/js/sb-admin-2.js"></script>
+
+    <!-- Page-Level Demo Scripts - Tables - Use for reference -->
+    <script>
+    $(document).ready(function() {
+        $('#dataTables-example').DataTable({
+            responsive: true
+        });
+    });
+    </script>
+
+	<script type="text/javascript" src="js/main.js"></script>
+</body>
+</html>
